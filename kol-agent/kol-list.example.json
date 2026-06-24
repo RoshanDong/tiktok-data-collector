@@ -1,0 +1,15 @@
+{
+  "kols": [
+    {
+      "name": "Example KOL",
+      "platform": "YouTube",
+      "channel": "@example",
+      "followers": "100K",
+      "niche": "tech",
+      "language": "English",
+      "email": "example@example.com",
+      "status": "new",
+      "last_contact": "2026-05-26"
+    }
+  ]
+}

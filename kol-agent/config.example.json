@@ -1,0 +1,13 @@
+{
+  "send_mode": "draft",
+  "outreach_filters": {
+    "keywords": ["collab", "partnership", "sponsorship", "KOL", "influencer", "brand deal", "sponsor"],
+    "time_range_days": 1,
+    "ignore_senders": ["no-reply@", "notification@", "noreply@"],
+    "label_for_processed": "KOL-Processed"
+  },
+  "schedule": {
+    "check_emails_cron": "0 9 * * *",
+    "send_outreach_cron": "30 10 * * *"
+  }
+}

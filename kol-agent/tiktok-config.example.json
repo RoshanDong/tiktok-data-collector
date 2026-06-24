@@ -1,0 +1,44 @@
+{
+  "tiktok_api": {
+    "client_key": "YOUR_CLIENT_KEY",
+    "client_secret": "YOUR_CLIENT_SECRET",
+    "base_url": "https://open.tiktokapis.com/v2/",
+    "access_token": "YOUR_ACCESS_TOKEN",
+    "refresh_token": "YOUR_REFRESH_TOKEN",
+    "open_id": "YOUR_OPEN_ID",
+    "seller_name": "YOUR_SELLER_NAME",
+    "seller_base_region": "US",
+    "shop_cipher": "YOUR_SHOP_CIPHER",
+    "shop_id": "YOUR_SHOP_ID",
+    "shop_code": "YOUR_SHOP_CODE"
+  },
+  "storage": {
+    "data_dir": "kol-agent/tiktok-data",
+    "log_dir": "kol-agent/tiktok-data/logs"
+  },
+  "schedule": {
+    "hour": 6,
+    "minute": 0,
+    "timezone": "Asia/Shanghai"
+  },
+  "retry": {
+    "max_attempts": 3,
+    "initial_delay_seconds": 5,
+    "max_delay_seconds": 60
+  },
+  "dingtalk": {
+    "appkey": "YOUR_DINGTALK_APPKEY",
+    "appsecret": "YOUR_DINGTALK_APPSECRET",
+    "access_token": "",
+    "token_expires_at": 0
+  },
+  "feishu": {
+    "app_id": "YOUR_FEISHU_APP_ID",
+    "app_secret": "YOUR_FEISHU_APP_SECRET",
+    "folder_token": "YOUR_FOLDER_TOKEN",
+    "user_access_token": "",
+    "refresh_token": "",
+    "refresh_token_expires_in": 0,
+    "user_access_token_expires_at": 0
+  }
+}

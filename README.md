@@ -1,42 +1,59 @@
 # TikTok Data Collector
 
-TikTok 视频数据采集与自动上传工具，支持将每日视频表现数据导出到 Excel 并自动上传至钉钉和飞书多维表格。
+> 自动化采集 TikTok 视频表现数据，支持导出 Excel 并上传至钉钉群和飞书多维表格。
+
+[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ## 功能特性
 
-- **视频数据采集**: 从 TikTok API 获取全量视频表现数据（播放量、点赞、评论、分享、收藏等）
-- **Excel 导出**: 批量导出近N天每天的数据，支持按日期目录存储
-- **钉钉上传**: 自动将 Excel 文件上传至钉钉群
-- **飞书上传**: 自动将数据上传至飞书多维表格
-- **定时任务**: 支持 Cron 定时执行，每日自动运行
+| 功能 | 说明 |
+|------|------|
+| 视频数据采集 | 从 TikTok Open API 拉取全量视频表现数据（播放量、GMV、GPM、订单等） |
+| Excel 导出 | 批量导出指定日期范围数据，支持分目录存储 |
+| 钉钉上传 | 自动将 Excel 文件推送至钉钉群机器人 |
+| 飞书上传 | 自动创建飞书多维表格并同步字段、上传数据（含空白记录清理） |
+| Token 管理 | 自动刷新 TikTok / 钉钉 / 飞书 access_token |
+| 定时任务 | Cron 配置，每日自动执行 |
 
 ## 项目结构
 
 ```
 .
-├── .kol-agent/
-│   ├── scripts/                 # 核心脚本
-│   │   ├── export_video_performance.py  # 主脚本：数据导出 + 上传
-│   │   ├── dingtalk_uploader.py         # 钉钉上传模块
-│   │   ├── dingtalk_token.py           # 钉钉 Token 获取
-│   │   ├── feishu_uploader.py           # 飞书上传模块
-│   │   ├── feishu_token.py              # 飞书 Token 获取
-│   │   ├── feishu_refresh_token.py      # 飞书 Token 刷新
-│   │   └── refresh_token.py            # TikTok Token 刷新
-│   ├── tiktok-data/
-│   │   ├── exports/            # 导出的 Excel 文件
-│   │   ├── logs/                # 日志文件
-│   │   └── PROGRESS.md          # 开发进度记录
-│   └── tiktok-config.json       # 配置文件（包含 API 凭证）
-├── specs/                       # Speckit 实施计划文档
+├── kol-agent/
+│   ├── scripts/
+│   │   ├── export_video_performance.py      # 主脚本：数据导出 + 上传
+│   │   ├── dingtalk_uploader.py             # 钉钉上传模块
+│   │   ├── dingtalk_token.py                # 钉钉 access_token 获取
+│   │   ├── feishu_uploader.py               # 飞书多维表格上传
+│   │   ├── feishu_token.py                  # 飞书 access_token 获取
+│   │   ├── feishu_refresh_token.py          # 飞书 access_token 刷新
+│   │   ├── refresh_token.py                 # TikTok access_token 刷新
+│   │   ├── tiktok_api_client.py             # TikTok API 客户端
+│   │   ├── models.py                        # 数据模型
+│   │   ├── excel_writer.py                  # Excel 写入工具
+│   │   ├── order_aggregator.py              # 订单数据聚合
+│   │   ├── logger.py                        # 日志工具
+│   │   ├── retry_handler.py                 # 重试机制
+│   │   └── get_shop_video_performance_api_tester.py  # API 测试脚本
+│   ├── templates/                            # 邮件回复模板（KOL 联系）
+│   │   ├── reply_interested.md
+│   │   ├── reply_paid_only.md
+│   │   └── reply_rejection.md
+│   ├── tiktok-config.example.json            # 配置模板
+│   └── tiktok-data/
+│       └── PROGRESS.md                      # 开发进度记录
+├── specs/                                    # Speckit 实施计划
 │   ├── 001-tiktok-data-fetch/
 │   ├── 002-orders-api-test-automation/
 │   ├── 003-video-performance-exporter/
 │   ├── 004-dingtalk-excel-upload/
 │   └── 005-feishu-bitable-upload/
-├── api官方文档/                  # TikTok API 参考文档
-├── CLAUDE.md                    # Claude 项目说明
-└── requirements.txt             # Python 依赖
+├── api官方文档/                               # API 参考文档
+│   ├── 飞书/                                 # 飞书多维表格 API 文档
+│   └── ...
+├── requirements.txt
+├── CLAUDE.md
+└── README.md
 ```
 
 ## 快速开始
@@ -49,93 +66,94 @@ pip install -r requirements.txt
 
 ### 2. 配置凭证
 
-编辑 `.kol-agent/tiktok-config.json`：
+复制配置模板并填写真实凭证：
 
-```json
-{
-  "tiktok_api": {
-    "client_key": "你的 client_key",
-    "client_secret": "你的 client_secret",
-    "access_token": "你的 access_token",
-    "refresh_token": "你的 refresh_token"
-  },
-  "dingtalk": {
-    "appkey": "钉钉 appkey",
-    "appsecret": "钉钉 appsecret"
-  },
-  "feishu": {
-    "app_id": "飞书 app_id",
-    "app_secret": "飞书 app_secret",
-    "folder_token": "飞书文件夹 token"
-  }
-}
+```bash
+cp kol-agent/tiktok-config.example.json kol-agent/tiktok-config.json
+# 编辑 kol-agent/tiktok-config.json，填入你的 API 凭证
 ```
+
+**所需凭证：**
+
+| 平台 | 凭证 | 获取方式 |
+|------|------|----------|
+| TikTok | `client_key`, `client_secret`, `access_token`, `refresh_token` | TikTok Partner Center App |
+| 钉钉 | `appkey`, `appsecret` | 钉钉开放平台 → 应用详情 |
+| 飞书 | `app_id`, `app_secret`, `folder_token` | 飞书开放平台 → 应用详情 |
 
 ### 3. 运行脚本
 
 ```bash
 # 导出视频数据并上传到钉钉（默认行为）
-python3 .kol-agent/scripts/export_video_performance.py
+python3 kol-agent/scripts/export_video_performance.py
 
-# 仅导出不上传
-python3 .kol-agent/scripts/export_video_performance.py --no-upload
+# 仅导出，不上传
+python3 kol-agent/scripts/export_video_performance.py --no-upload
 
-# 上传指定日期的 Excel 到钉钉
-python3 .kol-agent/scripts/export_video_performance.py --upload-only 2026-06-15
+# 仅上传指定日期的 Excel 到钉钉（不拉取数据）
+python3 kol-agent/scripts/export_video_performance.py --upload-only 2026-06-15
 
 # 上传 Excel 到飞书多维表格
-python3 .kol-agent/scripts/feishu_uploader.py <excel文件路径> <日期>
+python3 kol-agent/scripts/feishu_uploader.py kol-agent/tiktok-data/exports/video_performance_2026-06-15.xlsx 2026-06-15
 
-# 刷新 TikTok Token
-python3 .kol-agent/scripts/refresh_token.py
+# 手动刷新 TikTok Token
+python3 kol-agent/scripts/refresh_token.py
 
-# 刷新飞书 Token
-python3 .kol-agent/scripts/feishu_refresh_token.py
+# 手动刷新飞书 Token
+python3 kol-agent/scripts/feishu_refresh_token.py
 ```
 
-## 定时任务配置
+## 定时任务（Cron）
 
 ```bash
-# 视频数据抓取 + 上传钉钉（每天 06:00）
-0 6 * * * cd /path/to/project && python3 .kol-agent/scripts/export_video_performance.py >> logs/cron.log 2>&1
+# 视频数据抓取 + 上传钉钉（每天 06:00 北京时间）
+0 6 * * * cd /path/to/tiktok-data-collector && python3 kol-agent/scripts/export_video_performance.py >> kol-agent/tiktok-data/logs/cron.log 2>&1
 
 # TikTok Token 刷新（每周一 04:00）
-0 4 * * 1 python3 .kol-agent/scripts/refresh_token.py >> logs/cron.log 2>&1
+0 4 * * 1 cd /path/to/tiktok-data-collector && python3 kol-agent/scripts/refresh_token.py >> kol-agent/tiktok-data/logs/cron.log 2>&1
 
-# 飞书 Token 刷新（每小时）
-0 * * * * python3 .kol-agent/scripts/feishu_refresh_token.py >> logs/cron.log 2>&1
+# 飞书 Token 刷新（每小时，user_access_token 有效期 2 小时）
+0 * * * * cd /path/to/tiktok-data-collector && python3 kol-agent/scripts/feishu_refresh_token.py >> kol-agent/tiktok-data/logs/cron.log 2>&1
 ```
 
-## API 数据字段
-
-导出的 Excel 包含以下字段：
+## 导出的 Excel 字段
 
 | 字段 | 说明 |
 |------|------|
-| 日期 | 数据日期 |
-| 视频ID | 视频唯一标识 |
-| 视频标题 | 视频标题 |
-| 播放量 | 视频播放次数 |
-| 点赞数 | 点赞次数 |
-| 评论数 | 评论次数 |
-| 分享数 | 分享次数 |
-| 收藏数 | 收藏次数 |
-| 关注数 | 关注增量 |
-| 播放完成率 | 完播率 |
+| Video ID | 视频唯一标识 |
+| Title | 视频标题 |
+| Username | 创作者用户名 |
+| Creator User Name | 创作者姓名 |
+| Creator Nick Name | 创作者昵称 |
+| Creator Author Type | 作者类型 |
+| Video Post Time | 发布时间 |
+| Duration (sec) | 视频时长（秒） |
+| Hashtags | 话题标签 |
+| GMV Amount | 商品成交总额 |
+| GMV Currency | 货币单位 |
+| GPM Amount | 千次播放成交额 |
+| GPM Currency | GPM 货币单位 |
+| Avg Customers | 平均客户数 |
+| SKU Orders | SKU 订单数 |
+| Items Sold | 已售商品数 |
+| Views | 播放量 |
+| Click Through Rate | 点击率 |
+| Products | 商品数 |
 
 ## 技术栈
 
-- Python 3
-- TikTok Open API v2
-- 钉钉开放平台 API
-- 飞书开放平台 API
-- openpyxl (Excel 处理)
-- requests (HTTP 请求)
-- tenacity (重试机制)
+- **Python 3** — 主语言
+- **openpyxl** — Excel 文件生成
+- **urllib** — HTTP 请求（无外部依赖）
+- **TikTok Open API v2** — 数据来源
+- **钉钉开放平台 API** — 钉钉推送
+- **飞书开放平台 API** — 飞书多维表格
 
-## 开发进度
+## 相关文档
 
-详见 [PROGRESS.md](.kol-agent/tiktok-data/PROGRESS.md)
+- [TikTok API 官方文档](https://open.tiktokapis.com/)
+- [钉钉开放平台](https://open.dingtalk.com/)
+- [飞书开放平台](https://open.feishu.cn/)
 
 ## 许可证
 
